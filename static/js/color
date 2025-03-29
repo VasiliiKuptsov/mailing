@@ -1,0 +1,33 @@
+
+
+
+
+
+ <head><script src="{% static 'js/color-modes.js' %}"></script>
+ <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+
+
+
+              <div class="col">
+          <div class="card shadow-sm" style="height: 24rem;" >
+           <img class='carg-ims-top'
+                src="{{product.image|media_filter }}" class="card-img-top col-5" alt="Card image cap">
+            <div class="card-body">
+              <p class="card-text">{{product.name|truncatechars:100}}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group">
+                   <a class = "btn btn-primary" href="{% url 'products:products_detail' product.pk %}" role = 'button'>Посмотреть</a>
+
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>

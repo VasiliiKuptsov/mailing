@@ -1,0 +1,47 @@
+{% extends 'base_patterns/base.html' %}
+{% block title %}Домашняя страница{% endblock %}
+{% block content %}
+{% include 'base_patterns/header.html' %}
+<section class="py-5 text-center container">
+    <div class="row py-lg-5">
+        <div class="col-lg-6 col-md-8 mx-auto">
+            <h1 class="fw-light">Mailings</h1>
+            <p class="lead text-body-secondary">Mailing list management service</p>
+        </div>
+    </div>
+</section>
+<div class="album py-5 bg-body-tertiary container">
+    <div class="row row-cols-1 row-cols-md-4 g-4">
+        <div class="col-4">
+            <p>Получатели рассылки - {{ count_recipients }} человек</p>
+            {% for recipient in recipients %}
+            <div class="card h-10 mt-2 shadow-sm">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h3 class="card-title">{{ recipient.fullname }}</h3>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-4">
+            <p>Рассылки - {{ count_all_mailings }} штук(и)</p>
+            {% for mailing in all_mailings %}
+            <div class="card h-10 mt-2 shadow-sm">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h6 class="card-title">{{ mailing.message.subject_letter }}</h6>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-4">
+            <p>Рассылки со статусом "STARTED" - {{ count_active_mailings }} штук(и)</p>
+            {% for active_mailing in active_mailings %}
+            <div class="card h-10 mt-2 shadow-sm">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h6 class="card-title">{{ active_mailing.message.subject_letter }}</h6>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

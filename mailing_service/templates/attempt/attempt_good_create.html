@@ -1,0 +1,14 @@
+{% extends 'base_patterns/base.html' %}
+{% block title %}Страница была успешно создана{% endblock %}
+{% block content %}
+{% include 'base_patterns/header.html' %}
+<div class="container mt-2 mb-2">
+    <h1>Сообщение успешно отправлено!</h1>
+    <p>Вы будете перенаправлены на главную страницу через несколько секунд.</p>
+    <script>
+        setTimeout(function () {
+            window.location.href = "{% url 'mailing_service:attempt_mailing_home' %}";
+        }, 5000);
+    </script>
+</div>
+{% endblock %}

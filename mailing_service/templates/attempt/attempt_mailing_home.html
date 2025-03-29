@@ -1,0 +1,63 @@
+{% extends 'base_patterns/base.html' %}
+{% block title %}Сообщения{% endblock %}
+{% block content %}
+{% include 'base_patterns/header.html' %}
+<section class="py-5 text-center container">
+    <div class="row py-lg-5">
+        <div class="col-lg-6 col-md-8 mx-auto">
+            <h1 class="fw-light">Попытка рассылки</h1>
+            <p class="lead text-body-secondary">службой управления рассылками</p>
+            <a href="{% url 'mailing_service:attempt_mailing_create' %}" type="submit"
+               class="btn btn-sm btn-block btn-primary me-2">Послать рассылку</a>
+        </div>
+    </div>
+</section>
+<div class="container marketing mt-5">
+    <div class="container text-center mt-3">
+        <div class="row justify-content-center">
+            <div class="col-4"></div>
+            <div class="col-4">
+                <h2>Статистика рассылок</h2>
+            </div>
+            <div class="col-4"></div>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="table-responsive small">
+            <table class="table table-success table-striped">
+                <thead>
+                <tr>
+                    <th>Тема id</th>
+                    <th>Тема сообщения</th>
+                    <th>Описание рассылки</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                    <th>Ответ сервера</th>
+                    {% if request.user.is_superuser %}
+                    <th>Создал</th>
+                    {% endif %}
+                </tr>
+                </thead>
+
+                {% for object in object_list %}
+                <tr>
+                    <td>{{ object.id }}</td>
+                    <td>{{ object.mailing.message.subject_letter }}</td>
+                    <td>{{ object.mailing.message.body_letter|truncatechars:30 }}</td>
+                    <td>{{ object.date_attempt}}</td>
+                    <td>{{ object.status}}</td>
+                    <td>{{ object.server_response}}</td>
+                    {% if request.user.is_superuser %}
+                    <td>{{ object.mailing.owner }}</td>
+                    {% endif %}
+
+                </tr>
+                {% endfor%}
+            </table>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

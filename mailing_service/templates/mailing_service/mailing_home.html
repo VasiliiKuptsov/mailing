@@ -1,0 +1,37 @@
+{% extends 'base_patterns/base.html' %}
+{% block title %}Сообщения{% endblock %}
+{% block content %}
+{% include 'base_patterns/header.html' %}
+<section class="py-5 text-center container">
+    <div class="row py-lg-5">
+        <div class="col-lg-6 col-md-8 mx-auto">
+            <h1 class="fw-light">Mailing</h1>
+            <p class="lead text-body-secondary">Mailing list management service</p>
+            <a href="{% url 'mailing_service:mailing_create' %}" type="submit"
+               class="btn btn-sm btn-block btn-primary me-2">Создать рассылку</a>
+        </div>
+    </div>
+</section>
+<div class="album py-5 bg-body-tertiary container">
+    <div class="row cards-container">
+        {% for mailing in mailings %}
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column justify-content-between">
+                {% for recipient in mailing.recipient.all %}
+                <h3 class="card-title">{{ recipient.fullname }}</h3>
+                {% endfor %}
+                <p class="card-title">{{ mailing.message.subject_letter }}</p>
+                <p class="card-title">{{ mailing.status }}</p>
+                <div class="d-flex justify-content-end mt-auto">
+                    <a href="{% url 'mailing_service:mailing_update' pk=mailing.pk%}" type="submit"
+                       class="btn btn-sm btn-block btn-outline-primary me-2">Редактировать</a>
+                    <a href="{% url 'mailing_service:mailing_delete' pk=mailing.pk %}" type="submit"
+                       class="btn btn-sm btn-block btn-danger me-2">Удалить</a></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

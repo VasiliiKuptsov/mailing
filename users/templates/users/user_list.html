@@ -1,0 +1,62 @@
+{% extends 'mailing_service/base.html' %}
+{% block content %}
+{% load my_tags %}
+<div class="container marketing mt-5">
+
+    <div class="row">
+        <div class="table-responsive small">
+            <h2>Список пользователей </h2>
+            <table class="table table-success table-striped">
+                <thead>
+                <tr>
+                    <th>email</th>
+                    <th>Имя</th>
+                    <th>Фамилия</th>
+                    <th>Телефон</th>
+                    <th>Администратор</th>
+                    <th>Активность</th>
+                    <th>Последнее подключение</th>
+                    {% if user.is_superuser %}
+                    <th>Действия</th>
+                    {% endif %}
+
+                </tr>
+                </thead>
+
+                {% for object in object_list %}
+                <tr>
+                    <td>{{ object.email }}</td>
+                    <td>{{ object.first_name }}</td>
+                    <td>{{ object.last_name }}</td>
+                    <td>{{ object.phone_number }}</td>
+                    <td>{{ object.is_superuser|yesno:"Да, Нет"}}</td>
+                    {% if user.is_superuser or user|in_group:"Менеджеры" %}
+                    <td>
+                        {% if object.is_active %}
+                                <a type="button" class="btn btn-danger btn-sm"
+                                   href="{% url 'users:block_user' object.pk %}">Заблокировать</a>
+                            {% else %}
+                                <a type="button" class="btn btn-success btn-sm"
+                                   href="{% url 'users:block_user' object.pk %}">Разблокировать</a>
+                            {% endif %}
+                        {% else %}
+                        {{object.is_active|yesno:"Активный, Не активный"}}
+                    </td>
+                    {% endif %}
+                    <td>{{ object.last_login }}</td>
+                    {% if user.is_superuser %}
+                    <td>
+                        <a class="btn btn-primary btn-sm"
+                           href="{% url 'users:update' object.pk%}">Редактировать</a>
+                        <a class="btn btn-danger btn-sm"
+                           href="{% url 'users:delete' object.pk%}">Удалить</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor%}
+            </table>
+
+        </div><!-- /.row -->
+    </div><!-- /.container -->
+</div>
+{% endblock %}}
