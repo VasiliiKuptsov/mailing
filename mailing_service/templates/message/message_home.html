@@ -20,6 +20,7 @@
                 <div class="card-body d-flex flex-column justify-content-between">
                 <h3 class="card-title">{{ message.subject_letter }}</h3>
                 <p class="card-title">{{ message.body_letter }}</p>
+                 <p class="card-title">Сообщение {{ message.id }}</p>
                 <div class="d-flex justify-content-end mt-auto">
                     <a href="{% url 'mailing_service:message_update' pk=message.pk%}" type="submit"
                        class="btn btn-sm btn-block btn-outline-primary me-2">Редактировать</a>

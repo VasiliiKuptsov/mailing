@@ -10,4 +10,3 @@ urlpatterns = [
     path("", include("mailing_service.urls", namespace="mailing_service")),
     path("users/", include("users.urls", namespace="users")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

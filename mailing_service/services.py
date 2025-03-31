@@ -4,9 +4,8 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-
 from config.settings import CACHE_ENABLE, EMAIL_HOST_USER
-from mailing.models import Mailing, MailingAttempt
+from mailing.models import Mailing, AttemptMailing
 
 
 def run_mailing(request, pk):
@@ -16,8 +15,8 @@ def run_mailing(request, pk):
         try:
             mailing.status = Mailing.LAUNCHED
             send_mail(
-                subject=mailing.message.subject,
-                message=mailing.message.content,
+                subject=mailing.message.subject_letter,
+                message=mailing.message.body_letter,
                 from_email=EMAIL_HOST_USER,
                 recipient_list=[recipient.email],
                 fail_silently=False,
@@ -25,7 +24,7 @@ def run_mailing(request, pk):
             AttemptMailing.objects.create(
                 date_attempt=timezone.now(),
                 status=AttemptMailing.STATUS_OK,
-                server_response="Email отправлен",
+                answer="Email отправлен",
                 mailing=mailing,
             )
         except Exception as e:
@@ -33,14 +32,14 @@ def run_mailing(request, pk):
             AttemptMailing.objects.create(
                 date_attempt=timezone.now(),
                 status=AttemptMailing.STATUS_NOK,
-                server_response=str(e),
+                answer=str(e),
                 mailing=mailing,
             )
     if mailing.end_sending and mailing.end_sending <= timezone.now():
         # Если время рассылки закончилось, обновляем статус на "завершено"
         mailing.status = Mailing.COMPLETED
     mailing.save()
-    return redirect("mailing:mailing_home")
+    return redirect("mailing_service:mailing_home")
 
 
 def get_mailing_from_cache():
@@ -74,4 +73,4 @@ def block_mailing(request, pk):
     mailing = Mailing.objects.get(pk=pk)
     mailing.is_active = {mailing.is_active: False, not mailing.is_active: True}[True]
     mailing.save()
-    return redirect(reverse("mailing:mailing_home"))
+    return redirect(reverse("mailing_service:mailing_home"))

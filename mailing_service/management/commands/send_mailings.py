@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from django.utils import timezone
 
 from config.settings import EMAIL_HOST_USER
-from mailing.models import Mailing, MailingAttempt
+from mailing.models import Mailing, AttemptMailing
 
 
 class Command(BaseCommand):
@@ -15,24 +15,24 @@ class Command(BaseCommand):
             for recipient in mailing.recipients.all():
                 try:
                     send_mail(
-                        mailing.message.subject,
-                        mailing.message.content,
+                        mailing.message.subject_letter,
+                        mailing.message.body_letter,
                         from_email=EMAIL_HOST_USER,
                         recipient_list=[recipient.email],
                         fail_silently=False,
                     )
                     MailingAttempt.objects.create(
                         date_attempt=timezone.now(),
-                        status=MailingAttempt.STATUS_OK,
-                        server_response="Email отправлен",
+                        status=AttemptMailing.STATUS_OK,
+                        answer="Email отправлен",
                         mailing=mailing,
                     )
-                    print(f"Сообщение {mailing.message.subject} успешно отправлено на  {recipient.email}")
+                    print(f"Сообщение {mailing.message.subject_letter} успешно отправлено на  {recipient.email}")
                 except Exception as e:
                     MailingAttempt.objects.create(
                         date_attempt=timezone.now(),
-                        status=MailingAttempt.STATUS_NOK,
-                        server_response=str(e),
+                        status=AttemptMailing.STATUS_NOK,
+                        answer=str(e),
                         mailing=mailing,
                     )
                     print(str(e))

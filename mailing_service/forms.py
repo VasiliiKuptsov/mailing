@@ -15,6 +15,7 @@ class StyleFormMixin:
             else:
                 fild.widget.attrs["class"] = "form-control"
 
+
 class MailingForm(StyleFormMixin, forms.ModelForm):
     class Meta:
         model = Mailing
@@ -34,4 +35,3 @@ class MessageForm(StyleFormMixin, ModelForm):
         model = Message
         fields = "__all__"
         success_url = reverse_lazy("mailing_service:message_home")
-

@@ -5,12 +5,15 @@ from users.models import User
 
 NULLABLE = {"blank": True, "null": True}
 
+
 class Recipient(models.Model):
     email = models.EmailField(max_length=255, unique=True, verbose_name="E-mail")
-    #email = CharField(max_length=100, unique=True)
     fullname = CharField(max_length=100)
     comment = TextField(verbose_name="комментарий")
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, **NULLABLE, verbose_name="Владелец")
+
+    def __str__(self):
+        return f"{self.fullname}"
 
     class Meta:
         verbose_name = "Клиент"
@@ -22,6 +25,7 @@ class Message(models.Model):
     subject_letter = CharField(max_length=100, unique=True, verbose_name="тема")
     body_letter = TextField(verbose_name="комментарий")
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, **NULLABLE, verbose_name="Владелец")
+
     class Meta:
         verbose_name = "Письмо"
         verbose_name_plural = "Письма"
@@ -55,7 +59,7 @@ class Mailing(models.Model):
         default=CREATED,
         editable=False,
     )
-    message = ForeignKey(Message, on_delete=models.CASCADE, verbose_name="Сообщение")
+    message = ForeignKey(Message, on_delete=models.CASCADE, verbose_name="Письмо")
     recipient = ManyToManyField(
         Recipient, related_name="mailings", verbose_name="Клиент"
     )

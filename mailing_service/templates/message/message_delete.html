@@ -7,7 +7,7 @@
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Удалить</button>
-        <a href="{% url 'web_project:message_home' %}" class="btn btn-secondary">Отмена</a>
+        <a href="{% url 'mailing_service:message_home' %}" class="btn btn-secondary">Отмена</a>
     </form>
 </div>
 {% endblock %}

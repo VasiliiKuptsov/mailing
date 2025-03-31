@@ -1,12 +1,11 @@
-
 from django import forms
-from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, UserCreationForm
 from django.forms import ModelForm
 from django.urls import reverse_lazy
-
 from users.models import User
 from mailing_service.forms import StyleFormMixin
+
+
 class UserRegistrationForm(StyleFormMixin, UserCreationForm):
     class Meta:
         model = User
@@ -92,53 +91,3 @@ class PasswordRecoveryForm(StyleFormMixin, forms.Form):
 
 class UserLoginForm(StyleFormMixin, AuthenticationForm):
     model = User
-'''
-class BaseUserForm(forms.ModelForm):
-
-
-
-    class Meta:
-        model = get_user_model()
-        fields = ['email', 'phone_number']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['email'].widget.attrs.update(
-            {"class": "form-control", "placeholder": "Input your email"}
-        )
-        self.fields['phone_number'].widget.attrs.update(
-            {"class": "form-control", "placeholder": "You can input your phone number"}
-        )
-
-
-class RegisterForm(BaseUserForm, UserCreationForm):
-    class Meta(BaseUserForm.Meta):
-        fields = BaseUserForm.Meta.fields
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["password1"].label = "Confirm password"
-        self.fields["password2"].help_text = (
-            "Input the same password as before for check your person"
-        )
-
-    def clean_email(self):
-
-        email = self.cleaned_data.get("email")
-        if CustomUser.objects.filter(email=email).exists():
-            raise forms.ValidationError("Такой email уже используется ")
-        return email
-
-
-
-class OwnerUserForm(forms.ModelForm):
-    class Meta:
-        model = CustomUser
-        fields = ['username', 'email', 'phone_number']
-
-
-class ManagerUserForm(forms.ModelForm):
-    class Meta:
-        model = CustomUser
-        fields = ["is_active"]
-'''

@@ -1,8 +1,4 @@
 from django.contrib import admin
-
-# Register your models here.
-from django.contrib import admin
-
 from mailing_service.models import Mailing, AttemptMailing, Message, Recipient
 from users.models import User
 
