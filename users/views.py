@@ -67,7 +67,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         if self.request.user.is_superuser:
             return reverse_lazy("users:users")
         else:
-            return reverse_lazy("mailing:index")
+            return reverse_lazy("mailing:home")
 
     def get_object(self, queryset=None):
         self.object = super().get_object(queryset)
@@ -83,7 +83,7 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
         if self.request.user.is_superuser:
             return reverse_lazy("users:users")
         else:
-            return reverse_lazy("mailing:index")
+            return reverse_lazy("mailing:home")
 
     def get_object(self, queryset=None):
         self.object = super().get_object(queryset)

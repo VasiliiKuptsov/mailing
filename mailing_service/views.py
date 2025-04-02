@@ -1,7 +1,7 @@
 from smtplib import SMTPException
 from django.core.mail import send_mail
 from django.shortcuts import render
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin     #, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from config.settings import EMAIL_HOST_USER
@@ -16,6 +16,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from mailing_service.forms import MailingForm, MessageForm, RecipientForm
 from mailing_service.models import Mailing, AttemptMailing, Message, Recipient
+from mailing_service.forms import ManagerMailingForm, OwnerMailingForm
 
 
 class HomeView(TemplateView):
@@ -32,62 +33,100 @@ class HomeView(TemplateView):
             status=Mailing.STARTED
         ).count()
         return context
-        
-
-class MailingDetailView(LoginRequiredMixin, DetailView):
-    model = Mailing
-    form_class = MailingForm
-
-    def get_object(self, queryset=None):
-        self.object = super().get_object(queryset)
-        if self.request.user.groups.filter(name="Менеджеры") or self.request.user.is_superuser:
-            return self.object
-        if self.object.owner != self.request.user and not self.request.user.is_superuser:
-            raise PermissionDenied
-        return self.object
 
 
-class MailingListView(ListView):
+class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
     template_name = "mailing/mailing_home.html"
     context_object_name = "mailings"
 
-    def get_queryset(self, *args, **kwargs):
-        if self.request.user.is_superuser or self.request.user.groups.filter(name="Менеджеры").exists():
-            return super().get_queryset()
-        elif self.request.user.groups.filter(name="Пользователи").exists():
-            return super().get_queryset().filter(owner=self.request.user)
-        raise PermissionDenied
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.groups.filter(name="managers").exists():
+            context["is_in_group"] = self.request.user.groups.filter(
+                name="managers"
+            ).exists()
+            context["all_mailings"] = (
+                Mailing.objects.all().count()
+                if Mailing.objects.all().count() > 0
+                else 0
+            )
+            context["created_mailings"] = (
+                Mailing.objects.filter(status=Mailing.CREATED).count()
+                if Mailing.objects.filter().count() > 0
+                else 0
+            )
+            context["active_mailings"] = (
+                Mailing.objects.filter(status=Mailing.STARTED).count()
+                if Mailing.objects.filter().count() > 0
+                else 0
+            )
+            context["ended_mailings"] = (
+                Mailing.objects.filter(status=Mailing.ENDED).count()
+                if Mailing.objects.filter().count() > 0
+                else 0
+            )
+
+        elif user.groups.filter(name="users").exists():
+            context["all_mailings"] = (
+                Mailing.objects.filter(owner=user).count()
+                if Mailing.objects.filter(owner=user).count() > 0
+                else 0
+            )
+            logging.debug(context["all_mailings"])
+            context["created_mailings"] = (
+                Mailing.objects.filter(owner=user, status=Mailing.CREATED).count()
+                if Mailing.objects.filter(owner=user).count() > 0
+                else 0
+            )
+            context["active_mailings"] = (
+                Mailing.objects.filter(owner=user, status=Mailing.STARTED).count()
+                if Mailing.objects.filter(owner=user).count() > 0
+                else 0
+            )
+            context["ended_mailings"] = (
+                Mailing.objects.filter(owner=user, status=Mailing.ENDED).count()
+                if Mailing.objects.filter(owner=user).count() > 0
+                else 0
+            )
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        active_mailings = Mailing.objects.filter(status=Mailing.STARTED)
+        active_attempt_mailings = AttemptMailing.objects.filter(
+            mailing__in=active_mailings
+        )
+        for attempt_mailing in active_attempt_mailings:
+            if attempt_mailing.date_attempt.date() < timezone.now().date():
+                mailing = attempt_mailing.mailing
+                mailing.status = Mailing.ENDED
+                mailing.save()
+
+        return queryset
 
 
 class MailingCreateView(CreateView):
     model = Mailing
     template_name = "mailing/mailing_create.html"
-    fields = ["recipient", "message"]
+    form_class = OwnerMailingForm
     success_url = reverse_lazy("mailing_service:mailing_home")
 
-
     def form_valid(self, form):
-        recipient = form.save()
-        recipient.owner = self.request.user
-        recipient.save()
+        form.instance.owner = self.request.user
         return super().form_valid(form)
 
-    def test_func(self):
-        return self.request.user.groups.filter(name="Пользователи").exists() or self.request.user.is_superuser
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
 
 class MailingUpdateView(UpdateView):
     model = Mailing
-    fields = ["message", "recipient"]
-    template_name = "mailing/mailing_create.html"
+    template_name = "mailing/create_update_mailing_create.html"
     success_url = reverse_lazy("mailing_service:mailing_home")
-
-    def get_object(self, queryset=None):
-        self.object = super().get_object(queryset)
-        if self.object.owner != self.request.user and not self.request.user.is_superuser:
-            raise PermissionDenied
-        return self.object
 
 
 class MailingDeleteView(DeleteView):
@@ -96,12 +135,6 @@ class MailingDeleteView(DeleteView):
     context_object_name = "mailing"
     success_url = reverse_lazy("mailing_service:mailing_home")
 
-    def get_object(self, queryset=None):
-        self.object = super().get_object(queryset)
-        if self.object.owner != self.request.user and not self.request.user.is_superuser:
-            raise PermissionDenied
-        return self.object
-
 
 class MessageListView(ListView):
     model = Message
@@ -109,14 +142,8 @@ class MessageListView(ListView):
     context_object_name = "messages"
     success_url = reverse_lazy("mailing_service:message_delete")
 
-    def get_queryset(self, *args, **kwargs):
-        if self.request.user.is_superuser:
-            return super().get_queryset()
-        else:
-            raise PermissionDenied
 
-
-class MessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class MessageCreateView(LoginRequiredMixin, CreateView):  # UserPassesTestMixin,
     model = Message
     template_name = "message/create_update_message.html"
     fields = ["subject_letter", "body_letter"]
@@ -127,11 +154,6 @@ class MessageCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         recipient.owner = self.request.user
         recipient.save()
         return super().form_valid(form)
-
-    def test_func(self):
-        return self.request.user.is_superuser
-
-
 
 
 class MessageDetailView(LoginRequiredMixin, DetailView):
@@ -177,18 +199,6 @@ class RecipientListView(ListView):
     template_name = "recipient/recipient_home.html"
     context_object_name = "recipients"
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["title"] = "Получатели"
-        return context_data
-
-    def get_queryset(self, *args, **kwargs):
-        if self.request.user.is_superuser or self.request.user.groups.filter(name="Менеджеры"):
-            return super().get_queryset()
-        elif self.request.user.groups.filter(name="Пользователи"):
-            return super().get_queryset().filter(owner=self.request.user)
-        raise PermissionDenied
-
 
 class RecipientDetailView(LoginRequiredMixin, DetailView):
     model = Recipient
@@ -203,20 +213,11 @@ class RecipientDetailView(LoginRequiredMixin, DetailView):
         return self.object
 
 
-class RecipientCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class RecipientCreateView(LoginRequiredMixin, CreateView): # UserPassesTestMixin,
     model = Recipient
     template_name = "recipient/create_update_recipient.html"
     fields = ["email", "fullname", "comment"]
     success_url = reverse_lazy("mailing_service:recipient_home")
-
-    def form_valid(self, form):
-        recipient = form.save()
-        recipient.owner = self.request.user
-        recipient.save()
-        return super().form_valid(form)
-
-    def test_func(self):
-        return self.request.user.groups.filter(name="Пользователи").exists() or self.request.user.is_superuser
 
 
 class RecipientUpdateView(LoginRequiredMixin, UpdateView):
@@ -244,17 +245,97 @@ class RecipientDeleteView(LoginRequiredMixin, DeleteView):
             raise PermissionDenied
         return self.object
 
+
 class AttemptMailingListView(LoginRequiredMixin, ListView):
     model = AttemptMailing
     template_name = "attempt/attempt_mailing_home.html"
     context_object_name = "attempts"
 
-    def get_queryset(self, *args, **kwargs):
-        if self.request.user.is_superuser:
-            return super().get_queryset()
-        elif self.request.user.groups.filter(name="Пользователи").exists():
-            return super().get_queryset().filter(owner=self.request.user)
-        raise PermissionDenied
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        if user.groups.filter(name="users").exists():
+            started_mailings = Mailing.objects.filter(
+                status=Mailing.STARTED, owner=self.request.user
+            )
+
+            context["started_mailings"] = (
+                AttemptMailing.objects.filter(
+                    mailing__in=started_mailings, owner=self.request.user
+                ).count()
+                if AttemptMailing.objects.filter(
+                    mailing__in=started_mailings, owner=self.request.user
+                ).count()
+                > 0
+                else 0
+            )
+
+            context["count_attempts_mailings"] = (
+                AttemptMailing.objects.filter(owner=self.request.user).count()
+                if AttemptMailing.objects.filter(owner=self.request.user).count() > 0
+                else 0
+            )
+
+            context["count_success_attempts_mailings"] = (
+                AttemptMailing.objects.filter(
+                    status=AttemptMailing.SUCCESS, owner=self.request.user
+                ).count()
+                if AttemptMailing.objects.filter(
+                    status=AttemptMailing.SUCCESS, owner=self.request.user
+                ).count()
+                > 0
+                else 0
+            )
+
+            context["count_not_success_attempts_mailings"] = (
+                AttemptMailing.objects.filter(
+                    status=AttemptMailing.NOT_SUCCESS, owner=self.request.user
+                ).count()
+                if AttemptMailing.objects.filter(
+                    status=AttemptMailing.NOT_SUCCESS, owner=self.request.user
+                ).count()
+                > 0
+                else 0
+            )
+
+        elif user.groups.filter(name="managers").exists():
+            context["is_in_group"] = self.request.user.groups.filter(
+                name="managers"
+            ).exists()
+            started_mailings = Mailing.objects.filter(status=Mailing.STARTED)
+
+            context["started_mailings"] = (
+                AttemptMailing.objects.filter(mailing__in=started_mailings).count()
+                if AttemptMailing.objects.filter(mailing__in=started_mailings).count()
+                > 0
+                else 0
+            )
+
+            context["count_attempts_mailings"] = (
+                AttemptMailing.objects.all().count()
+                if AttemptMailing.objects.all().count() > 0
+                else 0
+            )
+
+            context["count_success_attempts_mailings"] = (
+                AttemptMailing.objects.filter(
+                    status=AttemptMailing.SUCCESS,
+                ).count()
+                if AttemptMailing.objects.filter(status=AttemptMailing.SUCCESS).count()
+                > 0
+                else 0
+            )
+
+            context["count_not_success_attempts_mailings"] = (
+                AttemptMailing.objects.filter(status=AttemptMailing.NOT_SUCCESS).count()
+                if AttemptMailing.objects.filter(
+                    status=AttemptMailing.NOT_SUCCESS
+                ).count()
+                > 0
+                else 0
+            )
+        return context
 
 
 class AttemptMailingCreateView(LoginRequiredMixin, CreateView):
