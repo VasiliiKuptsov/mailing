@@ -101,11 +101,10 @@ class AttemptMailing(models.Model):
         on_delete=models.CASCADE,
     )
     owner = models.ForeignKey(
-        get_user_model(),
+        User,
         verbose_name='Владелец',
-        help_text='Укажите продавца товара',
-        null=True,
-        blank=True,
+        help_text='Укажите владельца',
+        **NULLABLE,
         on_delete=models.SET_NULL,
     )
 

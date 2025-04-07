@@ -3,10 +3,10 @@ from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, UserCr
 from django.forms import ModelForm
 from django.urls import reverse_lazy
 from users.models import User
-from mailing_service.forms import StyleFormMixin
 
 
-class UserRegistrationForm(StyleFormMixin, UserCreationForm):
+
+class UserRegistrationForm(UserCreationForm):
     class Meta:
         model = User
         template_name = "users/user_form.html"
@@ -22,7 +22,7 @@ class UserRegistrationForm(StyleFormMixin, UserCreationForm):
         return email
 
 
-class UserForm(StyleFormMixin, UserChangeForm):
+class UserForm(UserChangeForm):
     class Meta:
         model = User
         fields = (
@@ -43,7 +43,7 @@ class UserForm(StyleFormMixin, UserChangeForm):
         phone_number.attrs["data-format"] = "+7 (ddd) ddd-dd-dd"
 
 
-class UserUpdateForm(StyleFormMixin, ModelForm):
+class UserUpdateForm(ModelForm):
     class Meta:
         model = User
         fields = (
@@ -76,7 +76,7 @@ class UserUpdateForm(StyleFormMixin, ModelForm):
         return email
 
 
-class PasswordRecoveryForm(StyleFormMixin, forms.Form):
+class PasswordRecoveryForm(forms.Form):
     email = forms.EmailField(label="Укажите Email")
 
     def clean_email(self):
@@ -89,5 +89,8 @@ class PasswordRecoveryForm(StyleFormMixin, forms.Form):
         return email
 
 
-class UserLoginForm(StyleFormMixin, AuthenticationForm):
+class UserLoginForm(AuthenticationForm):
     model = User
+
+
+

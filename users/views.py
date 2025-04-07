@@ -45,7 +45,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     template_name = "users/user_list.html"
 
     def test_func(self):
-        return self.request.user.groups.filter(name="Менеджеры").exists() or self.request.user.is_superuser
+        return self.request.user.groups.filter(name="Managers").exists() or self.request.user.is_superuser
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):

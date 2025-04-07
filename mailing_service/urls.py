@@ -5,7 +5,7 @@ from .views import AttemptMailingCreateView, AttemptMailingListView
 from .views import HomeView
 from .views import MailingCreateView, MailingDeleteView, MailingListView, MailingUpdateView
 from .views import MessageCreateView, MessageDeleteView, MessageDetailView, MessageListView, MessageUpdateView
-from .views import RecipientCreateView, RecipientDeleteView, RecipientListView, RecipientUpdateView
+from .views import RecipientCreateView, RecipientDeleteView, RecipientListView, RecipientUpdateView, RecipientDetailView
 
 
 app_name = MailingServiceConfig.name
@@ -19,6 +19,11 @@ urlpatterns = [
         "recipient_update/<int:pk>/",
         RecipientUpdateView.as_view(),
         name="recipient_update",
+    ),
+    path(
+        "recipientmailing/<int:pk>/detail/",
+        cache_page(60)(RecipientDetailView.as_view()),
+        name="recipientmailing_detail",
     ),
     path(
         "recipient_delete/<int:pk>/",

@@ -11,7 +11,6 @@ def email_verification(request, token):
     user.save()
     return HttpResponseRedirect(reverse("users:login"))
 
-
 @permission_required("users.view_user")
 def block_user(self, pk):
     user = User.objects.get(pk=pk)
